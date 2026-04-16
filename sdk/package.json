@@ -4,6 +4,7 @@
   "description": "Node.js SDK for the feature flag service",
   "main": "index.js",
   "exports": "./index.js",
+  "types": "./index.d.ts",
   "type": "commonjs",
   "license": "MIT",
   "author": "Kanishka Vats",
@@ -18,14 +19,15 @@
   ],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/kanishk6030/feature-flag-sdk.git"
   },
-  "homepage": "",
+  "homepage": "https://github.com/kanishk6030/feature-flag-sdk#readme",
   "bugs": {
-    "url": ""
+    "url": "https://github.com/kanishk6030/feature-flag-sdk/issues"
   },
   "files": [
     "index.js",
+    "index.d.ts",
     "README.md"
   ],
   "dependencies": {
