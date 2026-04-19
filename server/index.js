@@ -35,10 +35,12 @@ const io = new Server(server, {
 });
 io.use(async (socket, next) => {
   const apiKey = socket.handshake.auth?.apiKey || socket.handshake.headers['x-api-key'];
-  const ok = await verifyApiKey(apiKey);
-  if (!ok) {
+  const owner = await verifyApiKey(apiKey);
+  if (!owner || !owner.ownerId) {
     return next(new Error('Unauthorized'));
   }
+  socket.data.ownerId = String(owner.ownerId);
+  socket.join(`owner:${socket.data.ownerId}`);
   return next();
 });
 setIo(io);

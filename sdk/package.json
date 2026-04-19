@@ -1,37 +1,106 @@
 {
   "name": "feature-flag-sdk",
-  "version": "0.1.0",
-  "description": "Node.js SDK for the feature flag service",
-  "main": "index.js",
-  "exports": "./index.js",
-  "types": "./index.d.ts",
-  "type": "commonjs",
+  "version": "1.0.0",
+  "description": "Universal SDK for feature flag management with real-time updates via Socket.IO",
   "license": "MIT",
-  "author": "Kanishka Vats",
-  "keywords": [
-    "feature-flags",
-    "feature-flag",
-    "rollout",
-    "experimentation",
-    "toggle",
-    "sdk",
-    "socket.io"
-  ],
+  "author": {
+    "name": "Kanishka Vats",
+    "email": "kanishk@example.com",
+    "url": "https://github.com/kanishk6030"
+  },
+  
+  "homepage": "https://github.com/kanishk6030/feature-flag-sdk#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/kanishk6030/feature-flag-sdk.git"
   },
-  "homepage": "https://github.com/kanishk6030/feature-flag-sdk#readme",
   "bugs": {
-    "url": "https://github.com/kanishk6030/feature-flag-sdk/issues"
+    "url": "https://github.com/kanishk6030/feature-flag-sdk/issues",
+    "email": "kanishk@example.com"
+  },
+  
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.esm.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "files": [
-    "index.js",
-    "index.d.ts",
-    "README.md"
+    "dist",
+    "src",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
   ],
+  
+  "keywords": [
+    "feature-flags",
+    "feature-flag",
+    "feature-toggle",
+    "rollout",
+    "experimentation",
+    "a/b-testing",
+    "canary",
+    "toggle",
+    "sdk",
+    "socket.io",
+    "real-time",
+    "percent-rollout",
+    "segment-targeting"
+  ],
+  
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  
+  "scripts": {
+    "build": "node build.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/",
+    "prepublishOnly": "npm run build && npm run test",
+    "prepare": "npm run build"
+  },
+  
   "dependencies": {
     "node-fetch": "^3.3.2",
     "socket.io-client": "^4.8.3"
-  }
+  },
+  
+  "devDependencies": {
+    "esbuild": "^0.21.0",
+    "jest": "^29.7.0",
+    "eslint": "^8.0.0",
+    "@types/jest": "^29.5.0"
+  },
+  
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/kanishk6030"
+  },
+  
+  "categories": [
+    "feature management",
+    "flags",
+    "real-time"
+  ],
+  
+  "badges": [
+    {
+      "url": "https://github.com/kanishk6030/feature-flag-sdk/actions",
+      "alt": "CI Status",
+      "image": "https://github.com/kanishk6030/feature-flag-sdk/workflows/CI/badge.svg"
+    }
+  ]
 }

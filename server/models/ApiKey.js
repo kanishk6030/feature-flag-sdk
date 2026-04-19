@@ -1,6 +1,15 @@
 const mongoose = require('mongoose');
 
 const apiKeySchema = new mongoose.Schema({
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    index: true
+  },
+  ownerType: {
+    type: String,
+    default: 'user'
+  },
   keyHash: {
     type: String,
     required: true,

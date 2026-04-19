@@ -1,0 +1,46 @@
+# Development files
+node_modules/
+.git/
+.gitignore
+.env
+.env.local
+.env.*.local
+
+# Testing
+*.test.js
+*.spec.js
+jest.config.js
+__tests__/
+coverage/
+.nyc_output/
+
+# Build tools
+src/
+build.js
+tsconfig.json
+.eslintrc.json
+.eslintignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# npm
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# CI
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Documentation
+*.md
+!README.md
+docs/

@@ -1,10 +1,15 @@
 const mongoose = require('mongoose');
 
 const flagSchema = new mongoose.Schema({
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    index: true
+  },
   name: {
     type: String,
     required: true,
-    unique: true
+    unique: false
   },
   type: {
     type: String,
@@ -26,5 +31,7 @@ const flagSchema = new mongoose.Schema({
     value: String
   }]
 }, { timestamps: true });
+
+flagSchema.index({ ownerId: 1, name: 1 }, { unique: true });
 
 module.exports = mongoose.model('Flag', flagSchema);

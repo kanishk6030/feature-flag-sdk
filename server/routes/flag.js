@@ -20,9 +20,15 @@ function normalizeRules(rules) {
 // Create a new flag
 router.post('/', requireApiKeyOrJwt, async (req, res) => {
    try {
-    const flag = new Flag(req.body);
+    if (!req.ownerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const flag = new Flag({
+      ...req.body,
+      ownerId: req.ownerId
+    });
     await flag.save();
-    getIo().emit('flags:update', { action: 'create', flag });
+    getIo().to(`owner:${req.ownerId}`).emit('flags:update', { action: 'create', flag });
     res.status(201).json(flag);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -32,7 +38,10 @@ router.post('/', requireApiKeyOrJwt, async (req, res) => {
 // Get all flags
 router.get('/', requireApiKeyOrJwt, async (req, res) => {
   try {
-    const flags = await Flag.find();
+    if (!req.ownerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const flags = await Flag.find({ ownerId: req.ownerId });
     res.json(flags);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -42,7 +51,10 @@ router.get('/', requireApiKeyOrJwt, async (req, res) => {
 // Get a specific flag by ID
 router.get('/:id', requireApiKeyOrJwt, async (req, res) => {
   try { 
-    const flag = await Flag.findById(req.params.id);
+    if (!req.ownerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const flag = await Flag.findOne({ _id: req.params.id, ownerId: req.ownerId });
     if (!flag) return res.status(404).json({ message: 'Flag not found' });
     res.json(flag);
   } catch (err) {
@@ -53,12 +65,15 @@ router.get('/:id', requireApiKeyOrJwt, async (req, res) => {
 // PATCH toggle flag on/off
 router.patch('/:name/toggle', requireApiKeyOrJwt, async (req, res) => {
   try {
-    const flag = await Flag.findOne({ name: req.params.name });
+    if (!req.ownerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const flag = await Flag.findOne({ name: req.params.name, ownerId: req.ownerId });
     if (!flag) return res.status(404).json({ error: 'Flag not found' });
 
     flag.enabled = !flag.enabled;
     await flag.save();
-    getIo().emit('flags:update', { action: 'toggle', flag });
+    getIo().to(`owner:${req.ownerId}`).emit('flags:update', { action: 'toggle', flag });
     res.json(flag);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -69,12 +84,15 @@ router.patch('/:name/toggle', requireApiKeyOrJwt, async (req, res) => {
 // PATCH update rollout percentage
 router.patch('/:name/rollout', requireApiKeyOrJwt, async (req, res) => {
   try {
-    const flag = await Flag.findOne({ name: req.params.name });
+    if (!req.ownerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const flag = await Flag.findOne({ name: req.params.name, ownerId: req.ownerId });
     if (!flag) return res.status(404).json({ error: 'Flag not found' });
 
     flag.rolloutPercentage = req.body.percentage;
     await flag.save();
-    getIo().emit('flags:update', { action: 'rollout', flag });
+    getIo().to(`owner:${req.ownerId}`).emit('flags:update', { action: 'rollout', flag });
     res.json(flag);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -84,7 +102,10 @@ router.patch('/:name/rollout', requireApiKeyOrJwt, async (req, res) => {
 // PATCH update any flag fields
 router.patch('/:name', requireApiKeyOrJwt, async (req, res) => {
   try {
-    const flag = await Flag.findOne({ name: req.params.name });
+    if (!req.ownerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const flag = await Flag.findOne({ name: req.params.name, ownerId: req.ownerId });
     if (!flag) return res.status(404).json({ error: 'Flag not found' });
 
     if (req.body.name) {
@@ -120,7 +141,7 @@ router.patch('/:name', requireApiKeyOrJwt, async (req, res) => {
     }
 
     await flag.save();
-    getIo().emit('flags:update', { action: 'update', flag });
+    getIo().to(`owner:${req.ownerId}`).emit('flags:update', { action: 'update', flag });
     res.json(flag);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -131,8 +152,11 @@ router.patch('/:name', requireApiKeyOrJwt, async (req, res) => {
 // DELETE a flag
 router.delete('/:name', requireApiKeyOrJwt, async (req, res) => {
   try {
-    await Flag.findOneAndDelete({ name: req.params.name });
-    getIo().emit('flags:update', { action: 'delete', name: req.params.name });
+    if (!req.ownerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    await Flag.findOneAndDelete({ name: req.params.name, ownerId: req.ownerId });
+    getIo().to(`owner:${req.ownerId}`).emit('flags:update', { action: 'delete', name: req.params.name });
     res.json({ message: 'Flag deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });

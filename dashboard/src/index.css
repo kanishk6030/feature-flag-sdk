@@ -1,69 +1,55 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
-:root {
-  --bg: #f6f1ea;
-  --panel: #fff4e6;
-  --panel-alt: #f9efe2;
-  --text: #2b241d;
-  --muted: #6a5b4d;
-  --border: rgba(67, 56, 48, 0.18);
-  --accent: #f97316;
-  --success: #166534;
-  --success-bg: rgba(34, 197, 94, 0.15);
-  --success-border: rgba(34, 197, 94, 0.4);
-  --danger: #b91c1c;
-  --danger-bg: rgba(248, 113, 113, 0.18);
-  --shadow: 0 24px 60px rgba(60, 34, 10, 0.18);
-  --font: 'Space Grotesk', system-ui, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, monospace;
+@layer base {
+  :root {
+    --background: 40 33% 96%;
+    --foreground: 215 28% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 14%;
+    --primary: 173 80% 30%;
+    --primary-foreground: 180 100% 96%;
+    --secondary: 30 23% 92%;
+    --secondary-foreground: 215 28% 14%;
+    --muted: 30 20% 92%;
+    --muted-foreground: 215 16% 46%;
+    --accent: 35 90% 58%;
+    --accent-foreground: 215 28% 14%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 16% 85%;
+    --input: 215 16% 85%;
+    --ring: 173 80% 30%;
+  }
 
-  font: 16px/1.5 var(--font);
-  color: var(--text);
-  background: var(--bg);
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    @apply bg-background text-foreground font-[Manrope] antialiased;
+    background:
+      radial-gradient(circle at 15% 15%, rgba(20, 184, 166, 0.15), transparent 45%),
+      radial-gradient(circle at 85% 10%, rgba(56, 189, 248, 0.12), transparent 40%),
+      radial-gradient(circle at 35% 85%, rgba(251, 191, 36, 0.12), transparent 45%),
+      hsl(var(--background));
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-semibold tracking-tight;
+  }
 }
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: radial-gradient(circle at top, rgba(249, 115, 22, 0.12), transparent 55%),
-    radial-gradient(circle at 20% 40%, rgba(34, 197, 94, 0.15), transparent 45%),
-    var(--bg);
-}
-
-#root {
-  min-height: 100vh;
-}
-
-h1,
-h2,
-h3 {
-  font-weight: 700;
-  margin: 0;
-}
-
-h1 {
-  font-size: clamp(2.2rem, 3vw, 3.6rem);
-  letter-spacing: -1px;
-}
-
-h2 {
-  font-size: 1.6rem;
-  letter-spacing: -0.5px;
-}
-
-h3 {
-  font-size: 1.1rem;
-}
-
-p {
-  margin: 0;
-}
-
-code {
-  font-family: var(--mono);
+@layer utilities {
+  .bg-grid {
+    background-image:
+      radial-gradient(rgba(16, 20, 24, 0.06) 1px, transparent 0),
+      radial-gradient(rgba(16, 20, 24, 0.04) 1px, transparent 0);
+    background-size: 32px 32px, 64px 64px;
+    background-position: 0 0, 16px 16px;
+  }
 }

@@ -10,15 +10,15 @@ function hashApiKey(apiKey) {
   return crypto.createHash('sha256').update(apiKey).digest('hex');
 }
 
-async function isApiKeyValid(apiKey) {
+async function resolveApiKeyOwner(apiKey) {
   if (!apiKey) {
-    return false;
+    return null;
   }
 
   const allowEnvKey = String(process.env.ALLOW_ENV_API_KEY || '').toLowerCase() === 'true';
   const expectedKey = process.env.FLAG_API_KEY;
   if (allowEnvKey && expectedKey && apiKey === expectedKey) {
-    return true;
+    return { ownerId: null, ownerType: 'env' };
   }
 
   const keyHash = hashApiKey(apiKey);
@@ -28,17 +28,20 @@ async function isApiKeyValid(apiKey) {
     revokedAt: null,
     $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }]
   }).lean();
-  return Boolean(record);
+  if (!record) {
+    return null;
+  }
+  return { ownerId: record.ownerId, ownerType: record.ownerType };
 }
 
 //only be available to admin user
 async function requireApiKey(req, res, next) {
   const apiKey = getApiKey(req);
-  const valid = await isApiKeyValid(apiKey);
-  if (!valid) {
+  const owner = await resolveApiKeyOwner(apiKey);
+  if (!owner) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-
+  req.ownerId = owner.ownerId;
   return next();
 }
 
@@ -73,9 +76,54 @@ function requireJwt(req, res, next) {
   return next();
 }
 
+function requireUserJwt(req, res, next) {
+  const authHeader = req.header('Authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const result = verifyJwtToken(token);
+  if (!result.ok) {
+    const status = result.error === 'JWT_SECRET is not configured' ? 500 : 401;
+    return res.status(status).json({ error: result.error });
+  }
+
+  if (result.payload?.type !== 'user') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  req.user = result.payload;
+  req.ownerId = result.payload.id;
+  return next();
+}
+
+function requireAdminJwt(req, res, next) {
+  const authHeader = req.header('Authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const result = verifyJwtToken(token);
+  if (!result.ok) {
+    const status = result.error === 'JWT_SECRET is not configured' ? 500 : 401;
+    return res.status(status).json({ error: result.error });
+  }
+
+  if (result.payload?.type !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  req.user = result.payload;
+  return next();
+}
+
 async function requireApiKeyOrJwt(req, res, next) {
   const apiKey = getApiKey(req);
-  if (await isApiKeyValid(apiKey)) {
+  const owner = await resolveApiKeyOwner(apiKey);
+  if (owner) {
+    req.ownerId = owner.ownerId;
     return next();
   }
 
@@ -92,14 +140,17 @@ async function requireApiKeyOrJwt(req, res, next) {
   }
 
   req.user = result.payload;
+  if (result.payload?.type === 'user') {
+    req.ownerId = result.payload.id;
+  }
   return next();
 }
 
 async function verifyApiKey(apiKey) {
-  return isApiKeyValid(apiKey);
+  return resolveApiKeyOwner(apiKey);
 }
 
-async function rotateApiKey() {
+async function rotateApiKey(ownerId, ownerType = 'user') {
   const rawKey = crypto.randomBytes(32).toString('hex');
   const keyHash = hashApiKey(rawKey);
   const graceMinutes = Number(process.env.API_KEY_GRACE_MINUTES || 0);
@@ -107,14 +158,14 @@ async function rotateApiKey() {
   if (graceMinutes > 0) {
     const expiresAt = new Date(Date.now() + graceMinutes * 60 * 1000);
     await ApiKey.updateMany(
-      { revokedAt: null, expiresAt: null },
+      { ownerId, ownerType, revokedAt: null, expiresAt: null },
       { $set: { expiresAt } }
     );
   } else {
-    await ApiKey.updateMany({ revokedAt: null }, { $set: { revokedAt: new Date() } });
+    await ApiKey.updateMany({ ownerId, ownerType, revokedAt: null }, { $set: { revokedAt: new Date() } });
   }
 
-  await ApiKey.create({ keyHash });
+  await ApiKey.create({ ownerId, ownerType, keyHash });
 
   return rawKey;
 }
@@ -122,6 +173,8 @@ async function rotateApiKey() {
 module.exports = {
   requireApiKey,
   requireJwt,
+  requireUserJwt,
+  requireAdminJwt,
   requireApiKeyOrJwt,
   verifyApiKey,
   rotateApiKey
