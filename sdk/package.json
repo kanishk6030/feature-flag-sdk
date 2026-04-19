@@ -8,7 +8,6 @@
     "email": "kanishk@example.com",
     "url": "https://github.com/kanishk6030"
   },
-  
   "homepage": "https://github.com/kanishk6030/feature-flag-sdk#readme",
   "repository": {
     "type": "git",
@@ -18,7 +17,6 @@
     "url": "https://github.com/kanishk6030/feature-flag-sdk/issues",
     "email": "kanishk@example.com"
   },
-  
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.esm.js",
@@ -37,7 +35,6 @@
     "CHANGELOG.md",
     "LICENSE"
   ],
-  
   "keywords": [
     "feature-flags",
     "feature-flag",
@@ -53,11 +50,9 @@
     "percent-rollout",
     "segment-targeting"
   ],
-  
   "engines": {
     "node": ">=14.0.0"
   },
-  
   "scripts": {
     "build": "node build.js",
     "test": "jest",
@@ -67,35 +62,29 @@
     "prepublishOnly": "npm run build && npm run test",
     "prepare": "npm run build"
   },
-  
   "dependencies": {
     "node-fetch": "^3.3.2",
     "socket.io-client": "^4.8.3"
   },
-  
   "devDependencies": {
-    "esbuild": "^0.21.0",
-    "jest": "^29.7.0",
-    "eslint": "^8.0.0",
-    "@types/jest": "^29.5.0"
+    "@types/jest": "^29.5.0",
+    "esbuild": "^0.21.5",
+    "eslint": "^8.57.1",
+    "jest": "^29.7.0"
   },
-  
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/kanishk6030"
   },
-  
   "categories": [
     "feature management",
     "flags",
     "real-time"
   ],
-  
   "badges": [
     {
       "url": "https://github.com/kanishk6030/feature-flag-sdk/actions",

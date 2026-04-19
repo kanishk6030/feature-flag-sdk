@@ -11,10 +11,11 @@ if (!fs.existsSync(distDir)) {
 
 const commonConfig = {
   entryPoints: ['./index.js'],
-  bundle: false,
   sourcemap: true,
-  minify: true,
-  external: ['socket.io-client', 'node-fetch'],
+  minify: false,
+  bundle: false,
+  platform: 'node',
+  target: 'node14',
 }
 
 // Build CommonJS
