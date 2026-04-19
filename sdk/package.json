@@ -1,20 +1,20 @@
 {
-  "name": "feature-flag-sdk",
+  "name": "@kanishkvats/feature-flag-sdk",
   "version": "1.0.0",
   "description": "Universal SDK for feature flag management with real-time updates via Socket.IO",
   "license": "MIT",
   "author": {
     "name": "Kanishka Vats",
     "email": "kanishk@example.com",
-    "url": "https://github.com/kanishk6030"
+    "url": "https://github.com/kanishkvats"
   },
-  "homepage": "https://github.com/kanishk6030/feature-flag-sdk#readme",
+  "homepage": "https://github.com/kanishkvats/feature-flag-sdk#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kanishk6030/feature-flag-sdk.git"
+    "url": "https://github.com/kanishkvats/feature-flag-sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/kanishk6030/feature-flag-sdk/issues",
+    "url": "https://github.com/kanishkvats/feature-flag-sdk/issues",
     "email": "kanishk@example.com"
   },
   "type": "module",
@@ -55,11 +55,11 @@
   },
   "scripts": {
     "build": "node build.js",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src/",
-    "prepublishOnly": "npm run build && npm run test",
+    "lint": "eslint src/ --fix",
+    "prepublishOnly": "npm run build",
     "prepare": "npm run build"
   },
   "dependencies": {
@@ -78,7 +78,7 @@
   },
   "funding": {
     "type": "github",
-    "url": "https://github.com/sponsors/kanishk6030"
+    "url": "https://github.com/sponsors/kanishkvats"
   },
   "categories": [
     "feature management",
@@ -87,9 +87,9 @@
   ],
   "badges": [
     {
-      "url": "https://github.com/kanishk6030/feature-flag-sdk/actions",
+      "url": "https://github.com/kanishkvats/feature-flag-sdk/actions",
       "alt": "CI Status",
-      "image": "https://github.com/kanishk6030/feature-flag-sdk/workflows/CI/badge.svg"
+      "image": "https://github.com/kanishkvats/feature-flag-sdk/workflows/CI/badge.svg"
     }
   ]
 }

@@ -86,7 +86,7 @@ await client.init();
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
 | `baseUrl` | string | ✓ | Feature flag server base URL |
-| `apiKey` | string | ✗ | API key for authentication |
+| `apiKey` | string | ✓ | API key for authentication |
 | `socketUrl` | string | ✗ | Socket.IO endpoint (defaults to baseUrl) |
 | `onUpdate` | function | ✗ | Callback when flags update |
 
