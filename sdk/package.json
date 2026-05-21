@@ -5,16 +5,16 @@
   "license": "MIT",
   "author": {
     "name": "Kanishka Vats",
-    "email": "kanishk@example.com",
-    "url": "https://github.com/kanishkvats"
+    "email": "kanishk@gmail.com",
+    "url": "https://github.com/kanishk6030"
   },
-  "homepage": "https://github.com/kanishkvats/feature-flag-sdk#readme",
+  "homepage": "https://github.com/kanishk6030/feature-flag-sdk#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kanishkvats/feature-flag-sdk.git"
+    "url": "https://github.com/kanishk6030/feature-flag-sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/kanishkvats/feature-flag-sdk/issues",
+    "url": "https://github.com/kanishk6030/feature-flag-sdk/issues",
     "email": "kanishk@example.com"
   },
   "type": "module",
@@ -87,9 +87,9 @@
   ],
   "badges": [
     {
-      "url": "https://github.com/kanishkvats/feature-flag-sdk/actions",
+      "url": "https://github.com/kanishk6030/feature-flag-sdk/actions",
       "alt": "CI Status",
-      "image": "https://github.com/kanishkvats/feature-flag-sdk/workflows/CI/badge.svg"
+      "image": "https://github.com/kanishk6030/feature-flag-sdk/workflows/CI/badge.svg"
     }
   ]
 }
