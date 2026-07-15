@@ -1,6 +1,6 @@
 {
   "name": "@kanishkvats/feature-flag-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Universal SDK for feature flag management with real-time updates via Socket.IO",
   "license": "MIT",
   "author": {
