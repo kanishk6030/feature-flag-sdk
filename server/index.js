@@ -10,7 +10,7 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:8080';
 const frontendOrigins = (process.env.FRONTEND_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
@@ -65,18 +65,23 @@ app.get("/health",(req,res)=>{
     })
 })
 
-//Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+// Connect to MongoDB and start server only after successful connection
+const mongoOptions = { serverSelectionTimeoutMS: 10000 };
+
+mongoose.connect(process.env.MONGODB_URI, mongoOptions)
   .then(() => {
     console.log('MongoDB connected');
     ensureAdminUser().catch((err) => {
       // eslint-disable-next-line no-console
       console.error('Failed to bootstrap admin:', err.message);
     });
-  })
-  .catch(err => console.log('DB connection error:', err));
 
-  //Server is starting
-server.listen(PORT, () => 
-  console.log('Server running on port ' + PORT))
-;
+    // Start server after DB is available
+    server.listen(PORT, () => console.log('Server running on port ' + PORT));
+  })
+  .catch(err => {
+    // Log the full error and exit so the process can be restarted by supervisor
+    // eslint-disable-next-line no-console
+    console.error('DB connection error:', err);
+    process.exit(1);
+  });

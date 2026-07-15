@@ -27,105 +27,108 @@ const userLoginLimiter = rateLimit({
 });
 
 router.post('/admin/login', loginLimiter, async (req, res) => {
-  const username = String(req.body.username || '').toLowerCase();
-  const password = String(req.body.password || '');
-  const jwtSecret = process.env.JWT_SECRET;
+  try {
+    const username = String(req.body.username || '').toLowerCase();
+    const password = String(req.body.password || '');
+    const jwtSecret = process.env.JWT_SECRET;
 
-  if (!jwtSecret) {
-    return res.status(500).json({ error: 'Auth is not configured' });
-  }
-
-  const admin = await AdminUser.findOne({ username });
-  if (!admin) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  const now = new Date();
-  if (admin.lockUntil && admin.lockUntil > now) {
-    return res.status(423).json({ error: 'Account locked. Try later.' });
-  }
-
-  const isValid = await admin.comparePassword(password);
-  if (!isValid) {
-    const nextFails = (admin.failedLoginCount || 0) + 1;
-    const maxFails = Number(process.env.ADMIN_LOCKOUT_MAX || 5);
-    const lockMinutes = Number(process.env.ADMIN_LOCKOUT_MINUTES || 15);
-
-    admin.failedLoginCount = nextFails;
-    if (nextFails >= maxFails) {
-      admin.lockUntil = new Date(Date.now() + lockMinutes * 60 * 1000);
-      admin.failedLoginCount = 0;
+    if (!jwtSecret) {
+      return res.status(500).json({ error: 'Auth is not configured' });
     }
+
+    const admin = await AdminUser.findOne({ username });
+    if (!admin) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const now = new Date();
+    if (admin.lockUntil && admin.lockUntil > now) {
+      return res.status(423).json({ error: 'Account locked. Try later.' });
+    }
+
+    const isValid = await admin.comparePassword(password);
+    if (!isValid) {
+      const nextFails = (admin.failedLoginCount || 0) + 1;
+      const maxFails = Number(process.env.ADMIN_LOCKOUT_MAX || 5);
+      const lockMinutes = Number(process.env.ADMIN_LOCKOUT_MINUTES || 15);
+
+      admin.failedLoginCount = nextFails;
+      if (nextFails >= maxFails) {
+        admin.lockUntil = new Date(Date.now() + lockMinutes * 60 * 1000);
+        admin.failedLoginCount = 0;
+      }
+      await admin.save();
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    admin.failedLoginCount = 0;
+    admin.lockUntil = null;
+    admin.lastLoginAt = now;
     await admin.save();
-    return res.status(401).json({ error: 'Invalid credentials' });
+
+    const expiresIn = process.env.JWT_EXPIRES_IN || '8h';
+    const token = jwt.sign({ sub: admin.username, role: admin.role, type: 'admin' }, jwtSecret, { expiresIn });
+
+    return res.json({
+      token,
+      tokenType: 'Bearer',
+      expiresIn
+    });
+  } catch (err) {
+    console.error('Admin login error:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
   }
-
-  admin.failedLoginCount = 0;
-  admin.lockUntil = null;
-  admin.lastLoginAt = now;
-  await admin.save();
-
-  const expiresIn = process.env.JWT_EXPIRES_IN || '8h';
-  const token = jwt.sign({ sub: admin.username, role: admin.role, type: 'admin' }, jwtSecret, { expiresIn });
-
-  return res.json({
-    token,
-    tokenType: 'Bearer',
-    expiresIn
-  });
 });
 
 router.post('/register', async (req, res) => {
-  const email = String(req.body.email || '').toLowerCase().trim();
-  const password = String(req.body.password || '');
-  const jwtSecret = process.env.JWT_SECRET;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
-  }
-
-  if (!jwtSecret) {
-    return res.status(500).json({ error: 'Auth is not configured' });
-  }
-
-  const existing = await User.findOne({ email }).lean();
-  if (existing) {
-    return res.status(409).json({ error: 'User already exists' });
-  }
-
-  const passwordHash = await bcrypt.hash(password, 10);
-  const verifyTokenRaw = crypto.randomBytes(32).toString('hex');
-  const verifyTokenHash = crypto.createHash('sha256').update(verifyTokenRaw).digest('hex');
-  const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-  const user = await User.create({
-    email,
-    passwordHash,
-    isEmailVerified: false,
-    emailVerificationToken: verifyTokenHash,
-    emailVerificationExpires: verifyExpires
-  });
-
-  const apiKey = await rotateApiKey(user._id, 'user');
-  const appBase = process.env.DASHBOARD_URL || 'http://localhost:5173';
-  const verifyUrl = `${appBase.replace(/\/$/, '')}/verify-email?token=${verifyTokenRaw}`;
   try {
-    const sent = await sendVerificationEmail(email, verifyUrl);
-    if (!sent) {
-      // eslint-disable-next-line no-console
+    const email = String(req.body.email || '').toLowerCase().trim();
+    const password = String(req.body.password || '');
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    const existing = await User.findOne({ email }).lean();
+    if (existing) {
+      return res.status(409).json({ error: 'User already exists' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const verifyTokenRaw = crypto.randomBytes(32).toString('hex');
+    const verifyTokenHash = crypto.createHash('sha256').update(verifyTokenRaw).digest('hex');
+    const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const user = await User.create({
+      email,
+      passwordHash,
+      isEmailVerified: false,
+      emailVerificationToken: verifyTokenHash,
+      emailVerificationExpires: verifyExpires
+    });
+    const apiKey = await rotateApiKey(user._id, 'user');
+    const appBase = process.env.DASHBOARD_URL || 'http://localhost:5173';
+    const verifyUrl = `${appBase.replace(/\/$/, '')}/verify-email?token=${verifyTokenRaw}`;
+    try {
+      const sent = await sendVerificationEmail(email, verifyUrl);
+      if (!sent) {
+        console.log(`[Email verification] ${verifyUrl}`);
+      }
+    } catch (err) {
+      console.warn('Failed to send verification email:', err.message);
       console.log(`[Email verification] ${verifyUrl}`);
     }
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn('Failed to send verification email:', err.message);
-    // eslint-disable-next-line no-console
-    console.log(`[Email verification] ${verifyUrl}`);
-  }
 
-  return res.status(201).json({
-    message: 'Registered. Verify your email to login.',
-    apiKey
-  });
+    return res.status(201).json({
+      message: 'Registered. Verify your email to login.',
+      apiKey
+    });
+  } catch (err) {
+    // Log and return the error message for easier debugging
+    // eslint-disable-next-line no-console
+    console.error('Register error:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
+  }
 });
 
 router.get('/verify-email', async (req, res) => {
@@ -155,39 +158,44 @@ router.get('/verify-email', async (req, res) => {
 });
 
 router.post('/login', userLoginLimiter, async (req, res) => {
-  const email = String(req.body.email || '').toLowerCase().trim();
-  const password = String(req.body.password || '');
-  const jwtSecret = process.env.JWT_SECRET;
+  try {
+    const email = String(req.body.email || '').toLowerCase().trim();
+    const password = String(req.body.password || '');
+    const jwtSecret = process.env.JWT_SECRET;
 
-  if (!jwtSecret) {
-    return res.status(500).json({ error: 'Auth is not configured' });
+    if (!jwtSecret) {
+      return res.status(500).json({ error: 'Auth is not configured' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ error: 'Verify your email first' });
+    }
+
+    const isValid = await user.comparePassword(password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    user.lastLoginAt = new Date();
+    await user.save();
+
+    const expiresIn = process.env.JWT_EXPIRES_IN || '8h';
+    const token = jwt.sign({ sub: user.email, id: user._id, type: 'user' }, jwtSecret, { expiresIn });
+
+    return res.json({
+      token,
+      tokenType: 'Bearer',
+      expiresIn
+    });
+  } catch (err) {
+    console.error('User login error:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
   }
-
-  const user = await User.findOne({ email });
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  if (!user.isEmailVerified) {
-    return res.status(403).json({ error: 'Verify your email first' });
-  }
-
-  const isValid = await user.comparePassword(password);
-  if (!isValid) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  user.lastLoginAt = new Date();
-  await user.save();
-
-  const expiresIn = process.env.JWT_EXPIRES_IN || '8h';
-  const token = jwt.sign({ sub: user.email, id: user._id, type: 'user' }, jwtSecret, { expiresIn });
-
-  return res.json({
-    token,
-    tokenType: 'Bearer',
-    expiresIn
-  });
 });
 
 router.post('/api-keys/rotate', requireUserJwt, async (req, res) => {
