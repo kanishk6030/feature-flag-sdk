@@ -2,11 +2,9 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcrypt');
-const crypto = require('crypto');
 const { requireAdminJwt, requireUserJwt, rotateApiKey } = require('../middleware/auth');
 const AdminUser = require('../models/AdminUser');
 const User = require('../models/User');
-const { sendVerificationEmail } = require('../utils/mailer');
 
 const router = express.Router();
 
@@ -95,32 +93,15 @@ router.post('/register', async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const verifyTokenRaw = crypto.randomBytes(32).toString('hex');
-    const verifyTokenHash = crypto.createHash('sha256').update(verifyTokenRaw).digest('hex');
-    const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const user = await User.create({
       email,
-      passwordHash,
-      isEmailVerified: false,
-      emailVerificationToken: verifyTokenHash,
-      emailVerificationExpires: verifyExpires
+      passwordHash
     });
     const apiKey = await rotateApiKey(user._id, 'user');
-    const appBase = process.env.DASHBOARD_URL || 'http://localhost:5173';
-    const verifyUrl = `${appBase.replace(/\/$/, '')}/verify-email?token=${verifyTokenRaw}`;
-    try {
-      const sent = await sendVerificationEmail(email, verifyUrl);
-      if (!sent) {
-        console.log(`[Email verification] ${verifyUrl}`);
-      }
-    } catch (err) {
-      console.warn('Failed to send verification email:', err.message);
-      console.log(`[Email verification] ${verifyUrl}`);
-    }
 
     return res.status(201).json({
-      message: 'Registered. Verify your email to login.',
+      message: 'Registered successfully.',
       apiKey
     });
   } catch (err) {
@@ -129,32 +110,6 @@ router.post('/register', async (req, res) => {
     console.error('Register error:', err);
     return res.status(500).json({ error: err.message || 'Internal server error' });
   }
-});
-
-router.get('/verify-email', async (req, res) => {
-  const token = String(req.query.token || '');
-  if (!token) {
-    return res.status(400).json({ error: 'Token is required' });
-  }
-
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  const now = new Date();
-
-  const user = await User.findOne({
-    emailVerificationToken: tokenHash,
-    emailVerificationExpires: { $gt: now }
-  });
-
-  if (!user) {
-    return res.status(400).json({ error: 'Invalid or expired token' });
-  }
-
-  user.isEmailVerified = true;
-  user.emailVerificationToken = null;
-  user.emailVerificationExpires = null;
-  await user.save();
-
-  return res.json({ message: 'Email verified' });
 });
 
 router.post('/login', userLoginLimiter, async (req, res) => {
@@ -170,10 +125,6 @@ router.post('/login', userLoginLimiter, async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    if (!user.isEmailVerified) {
-      return res.status(403).json({ error: 'Verify your email first' });
     }
 
     const isValid = await user.comparePassword(password);

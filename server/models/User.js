@@ -13,18 +13,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  isEmailVerified: {
-    type: Boolean,
-    default: false
-  },
-  emailVerificationToken: {
-    type: String,
-    default: null
-  },
-  emailVerificationExpires: {
-    type: Date,
-    default: null
-  },
   lastLoginAt: {
     type: Date,
     default: null
