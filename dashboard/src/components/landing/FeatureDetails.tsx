@@ -22,6 +22,23 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
 
 const AVATARS = ["A", "P", "M", "L", "S", "K", "T", "R", "J", "N"];
 
+async function copyToClipboard(value: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const input = document.createElement("textarea");
+  input.value = value;
+  input.setAttribute("readonly", "true");
+  input.style.position = "absolute";
+  input.style.left = "-9999px";
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand("copy");
+  document.body.removeChild(input);
+}
+
 interface FeatureDetailsProps {
   flag: FlagRecord | null;
   onToggle: (name: string) => void;
@@ -119,7 +136,14 @@ export function FeatureDetails({
                   <label className="text-xs font-medium text-muted-foreground">Feature Name</label>
                   <div className="mt-1 flex items-center gap-2 rounded-lg border border-border bg-background/50 px-3 py-2 font-mono text-sm">
                     <span className="flex-1">{flag.name}</span>
-                    <Copy className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground" />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(flag.name)}
+                      className="rounded p-1 text-muted-foreground hover:text-foreground"
+                      aria-label="Copy feature name"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
 
@@ -172,11 +196,18 @@ export function FeatureDetails({
 
                 <div>
                   <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                    <KeyRound className="h-3.5 w-3.5" /> API Key
+                    <KeyRound className="h-3.5 w-3.5" /> Flag ID
                   </label>
                   <div className="mt-1 flex items-center gap-2 rounded-lg border border-border bg-background/50 px-3 py-2 font-mono text-xs">
                     <span className="flex-1 truncate">{flag._id}</span>
-                    <Copy className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground" />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(flag._id)}
+                      className="rounded p-1 text-muted-foreground hover:text-foreground"
+                      aria-label="Copy flag id"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -194,6 +225,12 @@ export function FeatureDetails({
                   className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-muted"
                 >
                   <RotateCcw className="h-4 w-4" /> Reset Rollout
+                </button>
+                <button
+                  onClick={() => copyToClipboard(flag.name)}
+                  className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm hover:bg-muted"
+                >
+                  <Copy className="h-4 w-4" /> Copy Name
                 </button>
                 <button
                   onClick={() => onDelete(flag.name)}

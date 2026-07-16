@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "description": "Universal SDK for feature flag management with real-time updates via Socket.IO",
   "license": "MIT",
-  "author": {
+  "author": {   
     "name": "Kanishka Vats",
     "email": "kanishk@gmail.com",
     "url": "https://github.com/kanishk6030"
@@ -17,7 +17,7 @@
     "url": "https://github.com/kanishk6030/feature-flag-sdk/issues",
     "email": "kanishk@example.com"
   },
-  "type": "module",
+  "type": "commonjs",
   "main": "./dist/index.js",
   "module": "./dist/index.esm.js",
   "types": "./dist/index.d.ts",

@@ -69,6 +69,20 @@ This feature flag system provides:
 
 ## Architecture
 
+```mermaid
+flowchart LR
+  U[Developer / Product Team] --> D[Dashboard UI]
+  D -->|Auth + Flag CRUD| API[Backend API /auth /flags]
+  API --> DB[(MongoDB)]
+
+  APP[Consumer App] --> SDK[FeatureFlagClient SDK]
+  SDK -->|GET /flags| API
+  API -->|flags:update via Socket.IO| SDK
+
+  D -->|Create/Toggle/Update/Delete Flag| API
+  API -->|Persist Changes| DB
+```
+
 ```
 feature-flag/
 ├── sdk/                          # Node.js SDK package

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Activity, LogOut, MoreHorizontal, Plus, RefreshCw, Search, Users } from "lucide-react";
+import { Activity, CheckCircle2, Layers, LogOut, MoreHorizontal, Plus, RefreshCw, Search, Shield, Users } from "lucide-react";
 import { Reveal } from "./Reveal";
 import { SectionHeading } from "./Features";
 import type { DashboardConfig, FlagRecord } from "@/lib/dashboard-api";
@@ -94,51 +94,154 @@ export function Dashboard({
   const paged = filtered.slice((current - 1) * perPage, current * perPage);
 
   const evaluationsPerDay = Math.max(flags.length * 18000, 24000).toLocaleString();
+  const stats = useMemo(
+    () => [
+      {
+        label: "Total flags",
+        value: flags.length,
+        icon: Layers,
+        tone: "text-foreground",
+      },
+      {
+        label: "Enabled",
+        value: flags.filter((flag) => flag.enabled).length,
+        icon: CheckCircle2,
+        tone: "text-emerald",
+      },
+      {
+        label: "Percentage rollouts",
+        value: flags.filter((flag) => flag.type === "percentage").length,
+        icon: Shield,
+        tone: "text-cyan",
+      },
+      {
+        label: "Segment rules",
+        value: flags.reduce((sum, flag) => sum + flag.rules.length, 0),
+        icon: Users,
+        tone: "text-primary",
+      },
+    ],
+    [flags],
+  );
 
   return (
     <section id="dashboard" className="relative py-24">
       <div className="pointer-events-none absolute inset-0 grid-bg opacity-20" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-linear-to-b from-muted/50 to-transparent" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow="Management Dashboard"
           title="A control room for every feature"
-          subtitle="Inspired by Linear, Supabase and Clerk — search, filter, toggle and roll out flags directly against the backend."
+          subtitle="Search, filter, toggle and roll out flags directly against your backend. Everything here maps to the real API and Socket.IO flow."
         />
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-          <div>
-            <span className="font-mono text-foreground">
-              {config.authMode === "apiKey" ? "API key" : "JWT"}
-            </span>
-            <span className="ml-2">connected to {config.apiBaseUrl}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onRefresh}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-foreground hover:bg-background"
-            >
-              <RefreshCw className="h-3.5 w-3.5" /> {isRefreshing ? "Refreshing" : "Refresh"}
-            </button>
-            <button
-              onClick={onSignOut}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-foreground hover:bg-background"
-            >
-              <LogOut className="h-3.5 w-3.5" /> Sign out
-            </button>
-          </div>
+        <div className="mt-8 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+          <Reveal>
+            <div className="glass overflow-hidden rounded-3xl border-border/80">
+              <div className="border-b border-border/70 bg-background/60 p-5 sm:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan">
+                      Connected workspace
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+                      Feature flag operations center
+                    </h3>
+                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                      Manage release toggles, progressive rollouts and targeted segments from one
+                      backend-backed dashboard.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+                    <div className="font-semibold text-foreground">
+                      {config.authMode === "apiKey" ? "API key" : "JWT"} connected
+                    </div>
+                    <div className="mt-1 font-mono text-[11px] break-all">{config.apiBaseUrl}</div>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {stats.map((stat) => (
+                    <div key={stat.label} className="rounded-2xl border border-border bg-background/50 p-4">
+                      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                        <span>{stat.label}</span>
+                        <stat.icon className={`h-4 w-4 ${stat.tone}`} />
+                      </div>
+                      <div className="mt-3 text-2xl font-bold tabular-nums">{stat.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="rounded-full border border-border px-3 py-1">
+                    {flags.length} {flags.length === 1 ? "flag" : "flags"}
+                  </span>
+                  <span className="rounded-full border border-border px-3 py-1">
+                    {evaluationsPerDay} evals/day
+                  </span>
+                  <span className="rounded-full border border-border px-3 py-1">
+                    {config.authMode === "apiKey" ? "X-API-Key" : "Bearer auth"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={onRefresh}
+                    className="inline-flex items-center gap-1 rounded-xl border border-border bg-background/60 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-background"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+                    {isRefreshing ? "Refreshing" : "Refresh"}
+                  </button>
+                  <button
+                    onClick={onSignOut}
+                    className="inline-flex items-center gap-1 rounded-xl border border-border bg-background/60 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-background"
+                  >
+                    <LogOut className="h-3.5 w-3.5" /> Sign out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal delay={90}>
+            <div className="glass h-full rounded-3xl p-5 sm:p-6">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <Activity className="h-4 w-4 text-emerald" /> Live signal
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Changes made from the dashboard are emitted through Socket.IO and picked up by
+                connected SDK clients.
+              </p>
+              <div className="mt-5 space-y-3 text-sm">
+                <div className="rounded-2xl border border-border bg-background/50 p-4">
+                  <div className="text-xs text-muted-foreground">Backend URL</div>
+                  <div className="mt-1 break-all font-mono text-xs">{config.apiBaseUrl}</div>
+                </div>
+                <div className="rounded-2xl border border-border bg-background/50 p-4">
+                  <div className="text-xs text-muted-foreground">Auth mode</div>
+                  <div className="mt-1 font-semibold">{config.authMode === "apiKey" ? "API key" : "JWT bearer"}</div>
+                </div>
+                <div className="rounded-2xl border border-border bg-background/50 p-4">
+                  <div className="text-xs text-muted-foreground">Realtime</div>
+                  <div className="mt-1 font-semibold text-emerald">Socket.IO updates enabled</div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
 
         {error && (
-          <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
-        <div className="mt-14 grid items-start gap-6 lg:grid-cols-[1.7fr_1fr]">
+        <div className="mt-8 grid items-start gap-6 lg:grid-cols-[1.7fr_1fr]">
           <Reveal>
-            <div className="glass overflow-hidden rounded-2xl">
+            <div className="glass overflow-hidden rounded-3xl border-border/80">
               {/* toolbar */}
-              <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
+              <div className="flex flex-wrap items-center gap-3 border-b border-border/80 p-4 sm:p-5">
                 <div className="relative flex-1 min-w-48">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
@@ -148,19 +251,19 @@ export function Dashboard({
                       setPage(1);
                     }}
                     placeholder="Search feature flags..."
-                    className="w-full rounded-lg border border-border bg-background/50 py-2 pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-background/60 py-2.5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-primary"
                   />
                 </div>
                 <button
                   onClick={onCreateFlag}
-                  className="ripple flex items-center gap-2 rounded-lg bg-linear-to-r from-primary to-primary-glow px-3.5 py-2 text-sm font-semibold text-primary-foreground shadow-glow"
+                  className="ripple flex items-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary-glow px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow"
                 >
                   <Plus className="h-4 w-4" /> Create Feature Flag
                 </button>
               </div>
 
               {/* filters */}
-              <div className="flex flex-wrap gap-2 border-b border-border p-3">
+              <div className="flex flex-wrap gap-2 border-b border-border/80 p-3 sm:px-5">
                 {FILTERS.map((f) => (
                   <button
                     key={f}
@@ -246,9 +349,19 @@ export function Dashboard({
                           colSpan={7}
                           className="px-4 py-10 text-center text-sm text-muted-foreground"
                         >
-                          {isLoading
-                            ? "Loading feature flags from the backend..."
-                            : "No feature flags match your filters."}
+                          {isLoading ? (
+                            "Loading feature flags from the backend..."
+                          ) : (
+                            <div className="mx-auto max-w-sm space-y-3">
+                              <p>No feature flags match your filters.</p>
+                              <button
+                                onClick={onCreateFlag}
+                                className="ripple inline-flex items-center gap-2 rounded-lg bg-linear-to-r from-primary to-primary-glow px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow"
+                              >
+                                <Plus className="h-4 w-4" /> Create your first flag
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     )}
@@ -257,7 +370,7 @@ export function Dashboard({
               </div>
 
               {/* pagination */}
-              <div className="flex items-center justify-between border-t border-border p-3 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between border-t border-border/80 p-3 text-xs text-muted-foreground sm:px-5">
                 <span>
                   {filtered.length} flag{filtered.length !== 1 && "s"}
                 </span>
@@ -297,7 +410,7 @@ export function Dashboard({
           {/* side stats illustration */}
           <Reveal delay={120}>
             <div className="space-y-4">
-              <div className="glass rounded-2xl p-5">
+              <div className="glass rounded-3xl p-5">
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <Activity className="h-4 w-4 text-emerald" /> Live evaluations
                 </div>
@@ -318,7 +431,7 @@ export function Dashboard({
                 </p>
               </div>
 
-              <div className="glass rounded-2xl p-5">
+              <div className="glass rounded-3xl p-5">
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <Users className="h-4 w-4 text-cyan" /> Targeted segments
                 </div>
